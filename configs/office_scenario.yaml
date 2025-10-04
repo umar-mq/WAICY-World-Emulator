@@ -1,0 +1,47 @@
+# configs/office_scenario.yaml
+
+locations:
+  - name: "Office Cafe"
+    description: "A small, modern cafe with a few tables and a high-end coffee machine. A place for casual chats and quick breaks."
+    objects:
+      - name: "Coffee Machine"
+        description: "A single-serve espresso machine. Only one person can use it at a time."
+        is_usable: True
+      - name: "Main Table"
+        description: "A large communal table that can seat up to six people."
+        is_usable: False # Can't be "used" in a simple way
+
+agents:
+  - id: "alex"
+    profile:
+      name: "Alex"
+      backstory: "A driven data analyst who recently joined a competitive tech firm. Eager to impress but suffers from impostor syndrome."
+      personality: { openness: 0.7, conscientiousness: 0.9, extraversion: 0.2, agreeableness: 0.4, neuroticism: 0.8 }
+      core_values: ["Excellence", "Integrity", "Growth"]
+      long_term_goals: ["Become a senior analyst", "Gain the respect of my manager, Chloe"]
+    initial_state:
+      location: "Office Cafe"
+      mood: "Anxious"
+      short_term_goals: ["Get coffee and start my daily report"]
+
+  - id: "ben"
+    profile:
+      name: "Ben"
+      backstory: "A charismatic and competitive sales executive. Ben thrives on social interaction and friendly rivalry."
+      personality: { openness: 0.8, conscientiousness: 0.7, extraversion: 0.9, agreeableness: 0.6, neuroticism: 0.3 }
+      core_values: ["Success", "Networking", "Competition"]
+      long_term_goals: ["Become the top salesperson this quarter"]
+    initial_state:
+      location: "Office Cafe"
+      mood: "Energetic"
+
+  - id: "chloe"
+    profile:
+      name: "Chloe"
+      backstory: "The demanding and highly-focused engineering manager. Chloe is under a lot of pressure to deliver a major project."
+      personality: { openness: 0.5, conscientiousness: 0.9, extraversion: 0.4, agreeableness: 0.3, neuroticism: 0.7 }
+      core_values: ["Efficiency", "Quality", "Deadlines"]
+      long_term_goals: ["Successfully launch the 'Phoenix' project on time"]
+    initial_state:
+      location: "Office Cafe"
+      mood: "Stressed"
