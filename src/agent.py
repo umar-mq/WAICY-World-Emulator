@@ -1,6 +1,7 @@
-from dataclasses import dataclass
-from llm import LLM
-from prompts import agent_prompt
+from dataclasses import dataclass, field
+from src.llm import LLM
+from src.prompts import agent_prompt
+import json
 
 @dataclass
 class Personality:
@@ -128,7 +129,7 @@ class AgentProfile:
     backstory: str
     personality: Personality
     core_values: list
-    goals: list
+    long_term_goals: list[str]
 
 @dataclass
 class Memory:
@@ -141,8 +142,8 @@ class AgentState:
     mood: str
     location: str
     short_term_goals: list
-    relationships: dict
-    memories: list[Memory]
+    relationships: dict = field(default_factory=dict)
+    memories: list[Memory] = field(default_factory=list)
 
 class Agent:
     def __init__(self, llm: LLM, profile: AgentProfile, starting_state: AgentState = None):
@@ -164,21 +165,54 @@ class Agent:
         )
 
         self.state.memories.append(new_memory)
+
+    def _add_memory(self, mem_type: str, content: str):
+        new_memory = Memory(
+            timestamp=len(self.state.memories),
+            type=mem_type,
+            content=content
+        )
+        
+        self.state.memories.append(new_memory)
     
-    def generate_prompt(self, current_observation: str) -> str:
-        prompt = agent_prompt.format(
+    def _generate_prompt(self, current_observation: str) -> str:
+        """Generates the full prompt for the LLM."""
+        # Format recent memories for the prompt
+        recent_memories_str = "\n".join(
+            f"T-{m.timestamp}: ({m.type}) {m.content}" for m in self.state.memories
+        ) if self.state.memories else "No recent memories."
+
+        return agent_prompt.format(
             name=self.profile.name,
             backstory=self.profile.backstory,
             personality=str(self.profile.personality),
             core_values=", ".join(self.profile.core_values),
-            long_term_goals=", ".join(self.profile.goals),
+            long_term_goals=", ".join(self.profile.long_term_goals),
             current_mood=self.state.mood,
-            short_term_goals=", ".join(self.state.short_term_goals),
-            relationships=str(self.state.relationships),
-            recent_memories="\n".join(
-                f"[{m.timestamp}] ({m.type}) {m.content}" for m in self.state.memories
-            ),
+            short_term_goals=", ".join(self.state.short_term_goals) or "None",
+            relationships=json.dumps(self.state.relationships),
+            recent_memories=recent_memories_str,
             current_location=self.state.location,
             current_observation=current_observation
         )
-        return prompt
+    
+    def decide_action(self, observation: str) -> dict | None:
+        """The core agent loop: perceive, think, decide."""
+        # 1. Perceive the environment and add it to memory
+        self.perceive(observation)
+
+        # 2. Generate the prompt based on current state
+        prompt = self._generate_prompt(observation)
+        
+        # 3. Call the LLM for a structured decision
+        decision = self.llm.generate_structured_output(prompt)
+
+        # 4. If a valid decision is made, add it to memory
+        if decision and 'action' in decision and 'thought' in decision:
+            action_str = f"Decided to {decision['action']['type']} with details: {decision['action']['details']}. My thought was: {decision['thought']}"
+            self._add_memory("action", action_str)
+            return decision
+        else:
+            print("Error: LLM failed to return a valid decision.")
+            self._add_memory("error", "Failed to make a decision.")
+            return None
