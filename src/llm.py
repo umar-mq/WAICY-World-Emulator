@@ -1,6 +1,7 @@
 from openai import OpenAI
 import json
 
+
 class LLM:
     def __init__(self, model: str = "gemini-2.5-flash", api_key: str = None, temperature: float = 0.7):
         self.model = model
@@ -9,7 +10,6 @@ class LLM:
             api_key=api_key,
             base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
         )
-
 
     def generate_single_turn(self, prompt: str, system: str = None) -> str:
         messages = []
@@ -24,7 +24,7 @@ class LLM:
         )
 
         return response.choices[0].message.content
-    
+
     def generate_multi_turn(self, turns: list, system: str = None) -> str:
         messages = []
         if system:
@@ -40,7 +40,7 @@ class LLM:
             temperature=self.temperature
         )
         return response.choices[0].message.content
-    
+
     def generate_structured_output(self, prompt: str, system: str = None) -> dict | None:
         messages = []
         if system:
@@ -63,4 +63,3 @@ class LLM:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             return None
-    
